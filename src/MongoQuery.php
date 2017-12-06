@@ -12,45 +12,6 @@ use MongoDB\BSON\Regex;
  */
 class MongoQuery implements DatabaseQueryInterface
 {
-    /**
-     * @var string
-     */
-    private $database = '';
-
-    /**
-     * @var string
-     */
-    private $collection = '';
-
-    /**
-     * @var string
-     */
-    private $offset = '';
-
-    /**
-     * @var string
-     */
-    private $limit = '';
-
-    /**
-     * @var string
-     */
-    private $orderBy = '_id';
-
-    /**
-     * @var string
-     */
-    private $orderDirection = 'desc';
-    /**
-     * @var array
-     */
-    private $selectFields = [];
-
-    /**
-     * @var array
-     */
-    private $conditions = [];
-
     private static $translation = [
         '=' => '$eq',
         '!=' => '$ne',
@@ -63,6 +24,38 @@ class MongoQuery implements DatabaseQueryInterface
         'and' => '$and',
         'or' => '$or',
     ];
+    /**
+     * @var string
+     */
+    private $database = '';
+    /**
+     * @var string
+     */
+    private $collection = '';
+    /**
+     * @var string
+     */
+    private $offset = '';
+    /**
+     * @var string
+     */
+    private $limit = '';
+    /**
+     * @var string
+     */
+    private $orderBy = '_id';
+    /**
+     * @var string
+     */
+    private $orderDirection = 'desc';
+    /**
+     * @var array
+     */
+    private $selectFields = [];
+    /**
+     * @var array
+     */
+    private $conditions = [];
 
     /**
      * @return array
@@ -75,10 +68,11 @@ class MongoQuery implements DatabaseQueryInterface
     /**
      * @param string $field
      * @param string $operation
-     * @param $value
+     * @param        $value
+     *
      * @return DatabaseQueryInterface
      */
-    public function addAndCondition(string $field, string $operation, $value)
+    public function addAndCondition(string $field, string $operation, $value): DatabaseQueryInterface
     {
         if ($operation === 'like') {
             $operation = new Regex(".*" . $value . ".*", "i");
@@ -103,10 +97,11 @@ class MongoQuery implements DatabaseQueryInterface
 
     /**
      * @param string $field
-     * @param $value
-     * @return $this
+     * @param array  $value
+     *
+     * @return DatabaseQueryInterface
      */
-    public function whereInArrayCondition(string $field, $value = [])
+    public function whereInArrayCondition(string $field, $value = []): DatabaseQueryInterface
     {
         $queryPart = [$field => ['$in' => $value]];
 
@@ -116,10 +111,19 @@ class MongoQuery implements DatabaseQueryInterface
     }
 
     /**
-     * @param string $name
-     * @return $this
+     * @return string
      */
-    public function setDatabase(string $name)
+    public function getDatabase(): string
+    {
+        return $this->database;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return DatabaseQueryInterface
+     */
+    public function setDatabase(string $name): DatabaseQueryInterface
     {
         $this->database = $name;
 
@@ -129,37 +133,19 @@ class MongoQuery implements DatabaseQueryInterface
     /**
      * @return string
      */
-    public function getDatabase()
-    {
-        return $this->database;
-    }
-
-    /**
-     * @param string $name
-     * @return $this
-     */
-    public function setCollection(string $name)
-    {
-        $this->collection = $name;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCollection()
+    public function getCollection(): string
     {
         return $this->collection;
     }
 
     /**
-     * @param int $offset
-     * @return $this
+     * @param string $name
+     *
+     * @return DatabaseQueryInterface
      */
-    public function setOffset(int $offset)
+    public function setCollection(string $name): DatabaseQueryInterface
     {
-        $this->offset = $offset;
+        $this->collection = $name;
 
         return $this;
     }
@@ -173,12 +159,13 @@ class MongoQuery implements DatabaseQueryInterface
     }
 
     /**
-     * @param int $limit
-     * @return $this
+     * @param int $offset
+     *
+     * @return DatabaseQueryInterface
      */
-    public function setLimit(int $limit)
+    public function setOffset(int $offset): DatabaseQueryInterface
     {
-        $this->limit = $limit;
+        $this->offset = $offset;
 
         return $this;
     }
@@ -192,10 +179,23 @@ class MongoQuery implements DatabaseQueryInterface
     }
 
     /**
-     * @param string $name
-     * @return $this
+     * @param int $limit
+     *
+     * @return DatabaseQueryInterface
      */
-    public function addSelectField(string $name)
+    public function setLimit(int $limit): DatabaseQueryInterface
+    {
+        $this->limit = $limit;
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return DatabaseQueryInterface
+     */
+    public function addSelectField(string $name): DatabaseQueryInterface
     {
         $this->selectFields[] = $name;
 
@@ -211,17 +211,6 @@ class MongoQuery implements DatabaseQueryInterface
     }
 
     /**
-     * @param string $identifier
-     * @return $this
-     */
-    public function setOrderBy(string $identifier)
-    {
-        $this->orderBy = $identifier;
-
-        return $this;
-    }
-
-    /**
      * @return string
      */
     public function getOrderBy()
@@ -230,12 +219,13 @@ class MongoQuery implements DatabaseQueryInterface
     }
 
     /**
-     * @param string $orderDirection
-     * @return $this
+     * @param string $identifier
+     *
+     * @return DatabaseQueryInterface
      */
-    public function setOrderDirection(string $orderDirection)
+    public function setOrderBy(string $identifier): DatabaseQueryInterface
     {
-        $this->orderDirection = $orderDirection;
+        $this->orderBy = $identifier;
 
         return $this;
     }
@@ -246,5 +236,17 @@ class MongoQuery implements DatabaseQueryInterface
     public function getOrderDirection()
     {
         return $this->orderDirection;
+    }
+
+    /**
+     * @param string $orderDirection
+     *
+     * @return DatabaseQueryInterface
+     */
+    public function setOrderDirection(string $orderDirection): DatabaseQueryInterface
+    {
+        $this->orderDirection = $orderDirection;
+
+        return $this;
     }
 }
