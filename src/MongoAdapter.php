@@ -19,14 +19,26 @@ class MongoAdapter implements DatabaseAdapterInterface
     private $mongoClient = null;
 
     /**
-     * @param $mongoClient
-     * @return $this
+     * @param DatabaseQueryInterface $query
+     * @param array                  $data
+     *
+     * @return mixed
+     * @throws \Exception
      */
-    public function setClient($mongoClient)
+    public function insertOne(DatabaseQueryInterface $query, array $data = [])
     {
-        $this->mongoClient = $mongoClient;
+        $result = $this->getClient()
+                       ->selectCollection(
+                           $query->getDatabase(),
+                           $query->getCollection()
+                       )
+                       ->insertOne($data);
 
-        return $this;
+        if ($result->getInsertedId()) {
+            return $result->getInsertedId();
+        }
+
+        throw new \Exception('Mongo insert one failed');
     }
 
     /**
@@ -54,38 +66,30 @@ class MongoAdapter implements DatabaseAdapterInterface
     }
 
     /**
-     * @param DatabaseQueryInterface $query
-     * @param array $data
-     * @return mixed
-     * @throws \Exception
+     * @param $mongoClient
+     *
+     * @return DatabaseAdapterInterface
      */
-    public function insertOne(DatabaseQueryInterface $query, array $data = [])
+    public function setClient($mongoClient): DatabaseAdapterInterface
     {
-        $result = $this->getClient()
-                       ->selectCollection(
-                           $query->getDatabase(),
-                           $query->getCollection()
-                       )
-                       ->insertOne($data);
+        $this->mongoClient = $mongoClient;
 
-        if ($result->getInsertedId()) {
-            return $result->getInsertedId();
-        }
-
-        throw new \Exception('Mongo insert one failed');
+        return $this;
     }
 
     /**
      * @param DatabaseQueryInterface $query
-     * @param string $identifier
-     * @param array $updateData
+     * @param string                 $identifier
+     * @param array                  $updateData
+     *
      * @return $this
      */
     public function updateOne(
         DatabaseQueryInterface $query,
         string $identifier,
         array $updateData = []
-    ) {
+    )
+    {
         if (empty($updateData)) {
             return $this;
         }
@@ -95,14 +99,14 @@ class MongoAdapter implements DatabaseAdapterInterface
         }
 
         $this->getClient()
-            ->selectCollection(
-                $query->getDatabase(),
-                $query->getCollection()
-            )
-            ->updateOne(
-                ['_id' => new ObjectID($identifier)],
-                ['$set' => $updateData]
-            );
+             ->selectCollection(
+                 $query->getDatabase(),
+                 $query->getCollection()
+             )
+             ->updateOne(
+                 ['_id' => new ObjectID($identifier)],
+                 ['$set' => $updateData]
+             );
 
         // TODO: check if $result reported successful update, throw exception otherwise
 
@@ -111,6 +115,7 @@ class MongoAdapter implements DatabaseAdapterInterface
 
     /**
      * @param DatabaseQueryInterface $query
+     *
      * @return mixed|null
      */
     public function loadOne(DatabaseQueryInterface $query)
@@ -125,40 +130,36 @@ class MongoAdapter implements DatabaseAdapterInterface
         return null;
     }
 
-    public function deleteOne(DatabaseQueryInterface $query)
-    {
-        $result = $this->getClient()
-            ->selectCollection($query->getDatabase(), $query->getCollection())
-            ->deleteOne($query->build());
-
-        return true; // TODO: return true / false depending on `$result` data
-    }
-
+    /**
+     * @param DatabaseQueryInterface $query
+     *
+     * @return array
+     */
     public function loadMultiple(DatabaseQueryInterface $query)
     {
         $queryResults = $this->getClient()
-            ->selectCollection(
-                $query->getDatabase(),
-                $query->getCollection()
-            )
-            ->find(
-                $query->build(),
-                [
-                    'projection' => $query->getSelectFields(),
-                    'skip' => (int) $query->getOffset(),
-                    'limit' => (int) $query->getLimit(),
-                    'sort' => [
-                        $query->getOrderBy() => $query->getOrderDirection() === 'asc' ? -1 : 1
-                    ],
-                ]
-            );
+                             ->selectCollection(
+                                 $query->getDatabase(),
+                                 $query->getCollection()
+                             )
+                             ->find(
+                                 $query->build(),
+                                 [
+                                     'projection' => $query->getSelectFields(),
+                                     'skip' => (int)$query->getOffset(),
+                                     'limit' => (int)$query->getLimit(),
+                                     'sort' => [
+                                         $query->getOrderBy() => $query->getOrderDirection() === 'asc' ? - 1 : 1
+                                     ],
+                                 ]
+                             );
 
         $out = [];
         foreach ($queryResults as $result) {
             if (isset($result['_id']) === true &&
                 $result['_id'] instanceof ObjectID === true
             ) {
-                $result['_id'] = (string) $result['_id'];
+                $result['_id'] = (string)$result['_id'];
             }
             $out[] = $result->getArrayCopy();
         }
@@ -167,7 +168,21 @@ class MongoAdapter implements DatabaseAdapterInterface
     }
 
     /**
-     * @return \Framework\Base\Database\DatabaseQueryInterface
+     * @param DatabaseQueryInterface $query
+     *
+     * @return bool
+     */
+    public function deleteOne(DatabaseQueryInterface $query)
+    {
+        $result = $this->getClient()
+                       ->selectCollection($query->getDatabase(), $query->getCollection())
+                       ->deleteOne($query->build());
+
+        return true; // TODO: return true / false depending on `$result` data
+    }
+
+    /**
+     * @return DatabaseQueryInterface
      */
     public function newQuery(): DatabaseQueryInterface
     {

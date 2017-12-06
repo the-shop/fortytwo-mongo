@@ -6,8 +6,15 @@ use Framework\Base\Test\UnitTest;
 use Framework\Mongo\MongoAdapter;
 use MongoDB\Client;
 
+/**
+ * Class MongoAdapterTest
+ * @package Framework\Mongo\Test
+ */
 class MongoAdapterTest extends UnitTest
 {
+    /**
+     *
+     */
     public function testGetClient()
     {
         $adapter = new MongoAdapter();
